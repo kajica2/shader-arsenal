@@ -1,0 +1,136 @@
+:root {
+  --bg: #060608;
+  --bg-card: #0d0d12;
+  --bg-elevated: #14141c;
+  --ink: #e8e0d0;
+  --ink-dim: #6a6055;
+  --accent: #c9a84c;
+  --accent-l: #e8d48b;
+  --accent-d: #8a7233;
+  --cyan: #6ad7e5;
+  --magenta: #ff5dc8;
+  --border: rgba(201, 168, 76, 0.18);
+  --border-hi: rgba(201, 168, 76, 0.45);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-monospace, "SF Mono", "Menlo", "Cascadia Code", monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("data:image/svg+xml;utf8,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+a {
+  color: var(--accent-l);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.2s, color 0.2s;
+}
+
+a:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+button,
+.btn {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent-d);
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: inherit;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 2px;
+}
+
+button:hover,
+.btn:hover {
+  border-color: var(--accent);
+  background: rgba(201, 168, 76, 0.08);
+  box-shadow: 0 0 16px rgba(201, 168, 76, 0.15);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+h1 {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+h2 {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent-d);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  margin-right: 0.3rem;
+}
+
+.tag.live {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: 0 0 6px rgba(106, 215, 229, 0.4);
+}
+
+.tag.heavy {
+  color: var(--magenta);
+  border-color: var(--magenta);
+}
+
+pre,
+code {
+  font-family: ui-monospace, "SF Mono", "Menlo", "Cascadia Code", monospace;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
