@@ -15,6 +15,9 @@ export type ShaderRuntimeProps = {
   fragment: string;
   uniforms: Uniform[];
   audioReactive?: boolean;
+  /** When true, POST to /api/preprocess to resolve #include directives
+   *  before compilation. Default true. */
+  preprocess?: boolean;
   onError?: (err: string | null) => void;
 };
 
@@ -29,6 +32,7 @@ export function ShaderRuntime({
   fragment,
   uniforms,
   audioReactive = false,
+  preprocess = true,
   onError,
 }: ShaderRuntimeProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -52,7 +56,7 @@ export function ShaderRuntime({
   }, [uniforms]);
 
   const compile = useCallback(
-    (gl: WebGL2RenderingContext, src: string): WebGLProgram | null => {
+    async (gl: WebGL2RenderingContext, src: string): Promise<WebGLProgram | null> => {
       // Strip Next/TS imports & non-#include directives; we only ship one shader.
       const cleaned = src
         .split("\n")
@@ -82,8 +86,40 @@ out vec4 outColor;
 
       // Strip #version from the supplied fragment if it has one
       let body = cleaned.replace(/^#version[^\n]*\n/m, "").trim();
-      // strip any standalone #include — not loading external lygia here.
-      body = body.split("\n").filter((l) => !l.trim().startsWith("#include")).join("\n");
+
+      // If preprocessor is enabled and source has #include, server-side resolve.
+      if (preprocess && body.includes("#include")) {
+        try {
+          const r = await fetch("/api/preprocess", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ source: body }),
+          });
+          if (r.ok) {
+            const j = await r.json();
+            body = j.source;
+          } else {
+            const errBody = await r.json().catch(() => ({}));
+            onError?.(
+              "preprocess error: " +
+                (errBody.error || `HTTP ${r.status}`)
+            );
+            return null;
+          }
+        } catch (e) {
+          onError?.(
+            "preprocess fetch failed: " +
+              (e instanceof Error ? e.message : String(e))
+          );
+          return null;
+        }
+      } else {
+        // No preprocessor: strip remaining #include lines (defensive)
+        body = body
+          .split("\n")
+          .filter((l) => !l.trim().startsWith("#include"))
+          .join("\n");
+      }
 
       const full = `${vert}\n${header}\n${body}`;
 
@@ -248,8 +284,10 @@ out vec4 outColor;
       gl.deleteProgram(progRef.current);
       progRef.current = null;
     }
-    const p = compile(gl, fragment);
-    if (p) progRef.current = p;
+    (async () => {
+      const p = await compile(gl, fragment);
+      if (p) progRef.current = p;
+    })();
   }, [fragment, compile]);
 
   const startAudio = useCallback(async () => {

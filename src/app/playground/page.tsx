@@ -11,23 +11,27 @@ const ShaderRuntime = dynamic(
 
 type ShaderItem = { path: string; size: number };
 
-const DEFAULT_FRAG = `// Playground — edit me. Compiles on every keystroke after 600ms idle.
-precision highp float;
+const DEFAULT_FRAG = `// Playground — lygia #includes resolve via /api/preprocess.
+// Pick any lygia file in the left panel to load it.
+#include "lygia/color/palette/spectral.glsl"
+#include "lygia/generative/snoise.glsl"
 
 uniform float u_time;
 uniform vec2  u_resolution;
-
-float hash(vec2 p) {
-  p = fract(p * vec2(123.34, 456.21));
-  p += dot(p, p + 45.32);
-  return fract(p.x * p.y);
-}
+uniform float u_bass;
 
 void main() {
-  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-  vec3 col = 0.5 + 0.5 * cos(u_time + uv.xyx + vec3(0.0, 2.0, 4.0));
-  float g = hash(gl_FragCoord.xy + u_time);
-  col += (g - 0.5) * 0.06;
+  vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+
+  // domain-warped FBM with spectral palette
+  vec2 q = vec2(snoise(uv * 2.0 + u_time * 0.1),
+                snoise(uv * 2.0 + vec2(3.7, 1.2) - u_time * 0.1));
+  float f = snoise(uv * 2.0 + 2.0 * q);
+  vec3 col = spectral(f + u_time * 0.05);
+
+  // bass pump
+  col += vec3(0.5, 0.1, 0.8) * u_bass * 0.4;
+
   outColor = vec4(col, 1.0);
 }
 `;
