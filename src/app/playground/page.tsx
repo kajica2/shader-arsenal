@@ -13,12 +13,11 @@ type ShaderItem = { path: string; size: number };
 
 const DEFAULT_FRAG = `// Playground — lygia #includes resolve via /api/preprocess.
 // Pick any lygia file in the left panel to load it.
+// Uniforms (u_time, u_resolution, u_mouse, u_bass, u_mid, u_treble, u_level)
+// and outColor are auto-injected by the runtime — don't redeclare them.
+
 #include "lygia/color/palette/spectral.glsl"
 #include "lygia/generative/snoise.glsl"
-
-uniform float u_time;
-uniform vec2  u_resolution;
-uniform float u_bass;
 
 void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);

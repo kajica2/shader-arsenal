@@ -71,7 +71,7 @@ void main() {
   gl_Position = vec4(a_pos, 0.0, 1.0);
 }`;
 
-      const header = `
+      const header = `#version 300 es
 precision highp float;
 uniform float u_time;
 uniform vec2  u_resolution;
@@ -84,8 +84,11 @@ in  vec2 v_uv;
 out vec4 outColor;
 `;
 
-      // Strip #version from the supplied fragment if it has one
-      let body = cleaned.replace(/^#version[^\n]*\n/m, "").trim();
+      // Strip #version and precision from the supplied fragment if it has one
+      let body = cleaned
+        .replace(/^#version[^\n]*\n/m, "")
+        .replace(/^precision[^\n]*\n/m, "")
+        .trim();
 
       // If preprocessor is enabled and source has #include, server-side resolve.
       if (preprocess && body.includes("#include")) {

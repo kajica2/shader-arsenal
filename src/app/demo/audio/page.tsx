@@ -9,17 +9,8 @@ const ShaderRuntime = dynamic(
 );
 
 const FRAG = `// Sovereign Signal — audio-reactive band-mapped FBM plasma
-// Audio uniforms (auto-injected): u_time, u_resolution, u_mouse,
-//   u_bass, u_mid, u_treble, u_level
-precision highp float;
-
-uniform float u_time;
-uniform vec2  u_resolution;
-uniform vec2  u_mouse;
-uniform float u_bass;
-uniform float u_mid;
-uniform float u_treble;
-uniform float u_level;
+// Runtime auto-injects: u_time, u_resolution, u_mouse,
+//   u_bass, u_mid, u_treble, u_level, outColor. Don't redeclare.
 
 uniform float u_speed;     // master time multiplier
 uniform float u_zoom;      // base scale
