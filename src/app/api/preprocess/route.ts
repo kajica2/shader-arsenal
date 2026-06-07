@@ -4,8 +4,8 @@ import { promises as fs } from "fs";
 
 export const runtime = "nodejs";
 
-const LYGIA_ROOT = path.join(process.cwd(), "src", "shaders", "lygia", "lygia");
-const REAL_LYGIA_ROOT = path.join(process.cwd(), "src", "shaders", "lygia", "lygia");
+const LYGIA_ROOT = path.join(/* turbopackIgnore: true */ process.cwd(), "src", "shaders", "lygia", "lygia");
+const REAL_LYGIA_ROOT = path.join(/* turbopackIgnore: true */ process.cwd(), "src", "shaders", "lygia", "lygia");
 
 /**
  * Resolve #include directives in a GLSL fragment.
