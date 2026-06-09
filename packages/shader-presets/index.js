@@ -403,6 +403,109 @@ void main() {
 }
 `;
 
+exports.audioLiquidChroma = `// Audio Liquid Chroma
+// Liquid metallic mercury or organic glass flowing with chromatic aberration and iridescent pearl shading
+
+precision highp float;
+uniform float u_time;
+uniform vec2  u_resolution;
+uniform vec2  u_mouse;
+uniform float u_bass;
+uniform float u_mid;
+uniform float u_treble;
+uniform float u_level;
+
+// 2D Rotation
+mat2 rot(float a) {
+    float c = cos(a), s = sin(a);
+    return mat2(c, -s, s, c);
+}
+
+// Seamless sine-based noise for metallic warping
+float sineNoise(vec2 p) {
+    float v = 0.0;
+    v += sin(p.x * 2.0 + u_time * 0.4) * 0.5;
+    v += sin(p.y * 3.0 - u_time * 0.3) * 0.3;
+    p *= rot(0.5);
+    v += sin(p.x * 5.0 + u_time * 0.8) * 0.15;
+    v += sin(p.y * 8.0 - u_time * 1.2) * 0.05;
+    return v;
+}
+
+// Complex distortion field (domain warping)
+vec2 warp(vec2 p, out float d) {
+    vec2 q = vec2(
+        sineNoise(p + vec2(0.0, 0.0)),
+        sineNoise(p + vec2(5.2, 1.3))
+    );
+    vec2 r = vec2(
+        sineNoise(p + 4.0 * q + vec2(1.7, 9.2) + u_time * 0.15),
+        sineNoise(p + 4.0 * q + vec2(8.3, 2.8) + u_time * 0.08)
+    );
+    d = sineNoise(p + 4.0 * r);
+    return r;
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+    vec2 p = uv * (3.0 - u_bass * 0.5); // Zoom into the fluid depending on bass
+    
+    // Domain warp field
+    float density = 0.0;
+    vec2 w = warp(p, density);
+    
+    // Iridescent refraction coloring based on density and coordinate distortion
+    vec3 col = vec3(0.0);
+    
+    // Chromatic aberration setup: Split RGB sampling across warped space
+    // Chromatic splitting distance driven by treble levels
+    float split = 0.01 + u_treble * 0.06;
+    
+    // Red Channel
+    float dR = 0.0;
+    warp(p + vec2(split, 0.0), dR);
+    col.r = sin(dR * 4.0 + 0.0) * 0.5 + 0.5;
+    
+    // Green Channel
+    float dG = 0.0;
+    warp(p + vec2(0.0, split), dG);
+    col.g = sin(dG * 4.0 + 2.094) * 0.5 + 0.5;
+    
+    // Blue Channel
+    float dB = 0.0;
+    warp(p - vec2(split, split), dB);
+    col.b = sin(dB * 4.0 + 4.188) * 0.5 + 0.5;
+    
+    // Specular Highlight / Viscous shine based on gradient normals
+    float eps = 0.01;
+    float d1 = 0.0, d2 = 0.0, d3 = 0.0;
+    warp(p + vec2(eps, 0.0), d1);
+    warp(p + vec2(0.0, eps), d2);
+    warp(p, d3);
+    
+    vec2 normal = vec2(d1 - d3, d2 - d3) / eps;
+    float spec = max(0.0, 1.0 - length(normal) * 0.5);
+    spec = pow(spec, 12.0) * (1.2 + u_bass * 0.8);
+    
+    // Combine base chromatic fluid with high-gloss specular shine
+    col = mix(col, vec3(1.0, 1.0, 0.95), spec * 0.7);
+    
+    // Fluid self-shadowing/depth crevices
+    float shadow = smoothstep(0.4, -0.4, density);
+    col = mix(col, vec3(0.02, 0.01, 0.05), shadow * 0.4);
+    
+    // Dark vignetting to frame the movement
+    float vign = smoothstep(1.3, 0.4, length(uv));
+    col *= vign;
+    
+    // Boost contrast
+    col = smoothstep(0.0, 1.0, col);
+    col = pow(col, vec3(0.9));
+    
+    outColor = vec4(col, 1.0);
+}
+`;
+
 exports.audioNeonCyberpunk = `// Audio Neon Cyberpunk
 // Neon grid perspective with glowing lines reacting to bass and mids
 
@@ -920,6 +1023,112 @@ void main() {
 }
 `;
 
+exports.audioSacredGeometry = `// Audio Sacred Geometry
+// Shifting mathematical mandala morphing between polygon coordinates with fractal recursive symmetry
+
+precision highp float;
+uniform float u_time;
+uniform vec2  u_resolution;
+uniform vec2  u_mouse;
+uniform float u_bass;
+uniform float u_mid;
+uniform float u_treble;
+uniform float u_level;
+
+#define PI 3.14159265359
+
+// 2D Rotation
+mat2 rot(float a) {
+    float c = cos(a), s = sin(a);
+    return mat2(c, -s, s, c);
+}
+
+// Helper module function avoiding negative inputs for floats
+float idx_mod(float x, float y) {
+    return x - y * floor(x/y);
+}
+
+// SDF of regular N-sided Polygon
+float sdPolygon(vec2 p, int N, float r) {
+    float a = atan(p.y, p.x) + PI/2.0;
+    float b = 2.0 * PI / float(N);
+    float f = idx_mod(a, b) - b/2.0;
+    return length(p) * cos(f) - r;
+}
+
+void main() {
+    vec2 p = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+    float dist = length(p);
+    float angle = atan(p.y, p.x);
+    
+    // Background deep purple atmosphere
+    vec3 col = vec3(0.015, 0.005, 0.03) * (1.0 / (dist + 0.4));
+    
+    // --- 1. MORPHING CENTRAL POLYGON ---
+    // Smooth transition over time to cycle polygon vertices between 3 (triangle), 4 (square), 6 (hexagon), and 12 (circle-like)
+    float cycle = u_time * 0.4;
+    float blend = fract(cycle);
+    int N1 = 3 + int(idx_mod(floor(cycle), 4.0)) * 2;
+    int N2 = 3 + int(idx_mod(floor(cycle) + 1.0, 4.0)) * 2;
+    
+    // Safety check for vertex limits
+    if (N1 > 12) N1 = 12;
+    if (N2 > 12) N2 = 12;
+    
+    // Rotate coordinates
+    vec2 rotP = p * rot(u_time * 0.18 + u_bass * 0.15);
+    
+    // SDF calculations
+    float radius = 0.22 + u_bass * 0.08;
+    float sdf1 = sdPolygon(rotP, N1, radius);
+    float sdf2 = sdPolygon(rotP, N2, radius);
+    float mainSdf = mix(sdf1, sdf2, smoothstep(0.1, 0.9, blend));
+    
+    // Draw concentric ring echoes
+    float glow = 0.0016 / (abs(mainSdf) + 0.0012);
+    vec3 mainColor = mix(vec3(1.0, 0.0, 0.5), vec3(0.0, 0.8, 1.0), sin(u_time * 0.5) * 0.5 + 0.5);
+    col += mainColor * glow * (1.0 + u_mid * 1.5);
+    
+    // --- 2. RECURSIVE MANDALA SYMMETRY ---
+    // Kaleidoscope mirror reflections (6 sectors)
+    float sectors = 6.0;
+    float sAngle = mod(angle, 2.0 * PI / sectors) - PI / sectors;
+    sAngle = abs(sAngle);
+    vec2 kP = dist * vec2(cos(sAngle), sin(sAngle));
+    
+    // Duplicate sub-shapes along concentric distance levels
+    float numRings = 3.0;
+    for (float i = 1.0; i <= 3.0; i++) {
+        // Rotated offset sub-structures pulsing to mid levels
+        vec2 subP = kP - vec2(0.25 * i, 0.0);
+        subP *= rot(u_time * (0.3 * i) + u_mid * 0.4);
+        
+        float subRadius = 0.04 * i * (1.0 + u_mid * 0.5);
+        float subSdf = length(subP) - subRadius;
+        
+        float subGlow = 0.0008 / (abs(subSdf) + 0.001);
+        vec3 subColor = mix(vec3(1.0, 0.5, 0.0), vec3(0.0, 0.9, 0.7), i / 3.0);
+        col += subColor * subGlow * (0.5 + u_level);
+        
+        // Connecting laser spokes/lattice lines
+        float spokeSdf = abs(subP.y);
+        float spokeGlow = 0.0003 / (spokeSdf + 0.002);
+        col += vec3(0.8, 0.8, 1.0) * spokeGlow * (u_treble * 0.5 + 0.1) * smoothstep(0.6, 0.0, length(subP));
+    }
+    
+    // --- 3. RADIANT SUNBURST BEAMS ---
+    float rayCount = 12.0;
+    float rays = sin(angle * rayCount - u_time * 0.8) * cos(angle * 3.0) * 0.5 + 0.5;
+    float rayFade = smoothstep(0.8, 0.0, dist);
+    col += vec3(1.0, 0.7, 0.3) * rays * rayFade * 0.15 * (u_bass + u_mid);
+    
+    // Edge clean up vignetting
+    col *= smoothstep(1.3, 0.4, dist);
+    
+    outColor = vec4(col, 1.0);
+}
+`;
+
 exports.audioSoundwaveStar = `// Audio Soundwave Star
 // Radial soundwave starburst reacting to audio frequencies
 
@@ -969,6 +1178,104 @@ void main() {
     finalColor += rays * u_treble * 0.3 * vec3(0.8, 0.3, 1.0) / (r + 0.1);
     
     outColor = vec4(finalColor, 1.0);
+}
+`;
+
+exports.audioVectorScope = `// Audio Vector Scope
+// Retro analog vector oscilloscope / laser display mimicking phosphor CRT beam glow and signal distortion
+
+precision highp float;
+uniform float u_time;
+uniform vec2  u_resolution;
+uniform vec2  u_mouse;
+uniform float u_bass;
+uniform float u_mid;
+uniform float u_treble;
+uniform float u_level;
+
+#define PI 3.14159265359
+
+// Draw glowing neon lines with thickness and falloff
+float line(vec2 p, vec2 a, vec2 b, float width) {
+    vec2 pa = p - a, ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    float dist = length(pa - ba * h);
+    return width / (dist + 0.001);
+}
+
+// Simple hash for beam flickering
+float hash(float n) {
+    return fract(sin(n) * 43758.5453123);
+}
+
+void main() {
+    // Normal screen coordinates
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    vec2 p = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+    
+    // 1. CRT Screen Barrel Distortion
+    vec2 d_uv = uv - 0.5;
+    float dist_sq = dot(d_uv, d_uv);
+    p *= 1.0 + dist_sq * 0.15; // Warp coordinates towards center
+    
+    // Base dark phosphor background
+    vec3 col = vec3(0.01, 0.02, 0.015);
+    
+    // 2. Main Vector Waveforms
+    float r = length(p);
+    float angle = atan(p.y, p.x);
+    
+    // Create a circular wave, adding a modular frequency grid
+    // Bass drives diameter, mid drives waveform spikes, treble adds rapid glitching
+    float baseRadius = 0.35 + u_bass * 0.12;
+    
+    // Synthesize oscilloscope frequency spikes using sine harmonics
+    float wave = sin(angle * 6.0 - u_time * 4.0) * 0.05 * u_mid;
+    wave += cos(angle * 24.0 + u_time * 12.0) * 0.025 * u_level;
+    wave += sin(angle * 80.0) * 0.006 * u_treble; // High frequency static
+    
+    float targetDist = baseRadius + wave;
+    float ringSdf = abs(r - targetDist);
+    
+    // Green Phosphor beam glow setup
+    float beamIntensity = 0.0012 + u_level * 0.0008;
+    // Rapid beam flickering
+    beamIntensity *= 0.85 + 0.15 * hash(u_time * 45.0);
+    
+    float beamGlow = beamIntensity / (ringSdf + 0.001);
+    
+    // Core beam (super bright white center) + wide green phosphor trail
+    vec3 phosphorColor = vec3(0.1, 0.95, 0.4);
+    col += phosphorColor * beamGlow;
+    col += vec3(0.9, 1.0, 0.95) * pow(beamGlow, 3.5) * 0.4;
+    
+    // 3. Central horizontal audio waveform trail (cross-bar scope)
+    float horizWave = sin(p.x * 12.0 - u_time * 8.0) * 0.08 * u_bass;
+    horizWave += cos(p.x * 48.0) * 0.02 * u_mid;
+    
+    float horizSdf = abs(p.y - horizWave);
+    float horizGlow = (0.0006 + u_level * 0.0006) / (horizSdf + 0.0012);
+    // Flickering
+    horizGlow *= 0.8 + 0.2 * hash(u_time * 60.0 + 1.2);
+    
+    vec3 blueColor = vec3(0.0, 0.6, 1.0); // Blue grid crossbar
+    col += blueColor * horizGlow;
+    col += vec3(0.9, 0.95, 1.0) * pow(horizGlow, 3.0) * 0.3;
+    
+    // 4. CRT Raster lines and Scanline texture
+    float scanline = 0.92 + 0.08 * sin(p.y * 350.0 + u_time * 15.0);
+    col *= scanline;
+    
+    // Vignette / screen border shadowing
+    vec2 edge_dist = abs(uv - 0.5);
+    float vignette = smoothstep(0.5, 0.45, edge_dist.x) * smoothstep(0.5, 0.45, edge_dist.y);
+    col *= vignette;
+    
+    // Boost contrast
+    col = clamp(col, 0.0, 1.0);
+    col = pow(col, vec3(0.85));
+    
+    outColor = vec4(col, 1.0);
 }
 `;
 

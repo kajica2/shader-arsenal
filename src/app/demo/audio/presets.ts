@@ -873,5 +873,203 @@ void main() {
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }
 `
+  },
+  {
+    name: "Liquid Chroma",
+    subtitle: "Warped Iridescent Metallic Fluid",
+    code: `// Liquid Chroma — metallic fluid flow with chromatic aberration and iridescence
+uniform float u_speed;
+uniform float u_zoom;
+uniform float u_contrast;
+
+mat2 rot2d(float a) {
+  float c = cos(a), s = sin(a);
+  return mat2(c, -s, s, c);
+}
+
+float sineNoise(vec2 p) {
+  float v = 0.0;
+  v += sin(p.x * 2.0 + u_time * u_speed * 0.4) * 0.5;
+  v += sin(p.y * 3.0 - u_time * u_speed * 0.3) * 0.3;
+  p *= rot2d(0.5);
+  v += sin(p.x * 5.0 + u_time * u_speed * 0.8) * 0.15;
+  v += sin(p.y * 8.0 - u_time * u_speed * 1.2) * 0.05;
+  return v;
+}
+
+vec2 warp(vec2 p, out float d) {
+  vec2 q = vec2(sineNoise(p), sineNoise(p + vec2(5.2, 1.3)));
+  vec2 r = vec2(
+    sineNoise(p + 4.0 * q + vec2(1.7, 9.2) + u_time * u_speed * 0.15),
+    sineNoise(p + 4.0 * q + vec2(8.3, 2.8) + u_time * u_speed * 0.08)
+  );
+  d = sineNoise(p + 4.0 * r);
+  return r;
+}
+
+void main() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+  vec2 p = uv * (3.0 - u_bass * 0.5) * (1.5 / u_zoom);
+  
+  float density = 0.0;
+  vec2 w = warp(p, density);
+  
+  vec3 col = vec3(0.0);
+  float split = 0.01 + u_treble * 0.06;
+  
+  float dR = 0.0, dG = 0.0, dB = 0.0;
+  warp(p + vec2(split, 0.0), dR);
+  warp(p + vec2(0.0, split), dG);
+  warp(p - vec2(split, split), dB);
+  
+  col.r = sin(dR * 4.0 + 0.0) * 0.5 + 0.5;
+  col.g = sin(dG * 4.0 + 2.094) * 0.5 + 0.5;
+  col.b = sin(dB * 4.0 + 4.188) * 0.5 + 0.5;
+  
+  float eps = 0.01;
+  float d1 = 0.0, d2 = 0.0, d3 = 0.0;
+  warp(p + vec2(eps, 0.0), d1);
+  warp(p + vec2(0.0, eps), d2);
+  warp(p, d3);
+  
+  vec2 normal = vec2(d1 - d3, d2 - d3) / eps;
+  float spec = max(0.0, 1.0 - length(normal) * 0.5);
+  spec = pow(spec, 12.0) * (1.2 + u_bass * 0.8);
+  
+  col = mix(col, vec3(1.0, 1.0, 0.95), spec * 0.7);
+  float shadow = smoothstep(0.4, -0.4, density);
+  col = mix(col, vec3(0.02, 0.01, 0.05), shadow * 0.4);
+  
+  col *= smoothstep(1.3, 0.4, length(uv)) * u_contrast;
+  outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+}
+`
+  },
+  {
+    name: "Vector Scope",
+    subtitle: "Analog CRT Oscilloscope Laser",
+    code: `// Vector Scope — analog laser CRT oscilloscope with phosphor beam glow
+uniform float u_speed;
+uniform float u_zoom;
+uniform float u_contrast;
+
+float hash21(float n) {
+  return fract(sin(n) * 43758.5453123);
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  vec2 p = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+  
+  vec2 d_uv = uv - 0.5;
+  p *= 1.0 + dot(d_uv, d_uv) * 0.15;
+  p *= (1.5 / u_zoom);
+  
+  vec3 col = vec3(0.01, 0.02, 0.015);
+  
+  float r = length(p);
+  float angle = atan(p.y, p.x);
+  
+  float baseRadius = 0.35 + u_bass * 0.12;
+  float wave = sin(angle * 6.0 - u_time * u_speed * 4.0) * 0.05 * u_mid;
+  wave += cos(angle * 24.0 + u_time * u_speed * 12.0) * 0.025 * u_level;
+  wave += sin(angle * 80.0) * 0.006 * u_treble;
+  
+  float targetDist = baseRadius + wave;
+  float beamIntensity = (0.0012 + u_level * 0.0008);
+  beamIntensity *= 0.85 + 0.15 * hash21(u_time * 45.0);
+  
+  float beamGlow = beamIntensity / (abs(r - targetDist) + 0.001);
+  col += vec3(0.1, 0.95, 0.4) * beamGlow;
+  col += vec3(0.9, 1.0, 0.95) * pow(beamGlow, 3.5) * 0.4;
+  
+  float horizWave = sin(p.x * 12.0 - u_time * u_speed * 8.0) * 0.08 * u_bass;
+  horizWave += cos(p.x * 48.0) * 0.02 * u_mid;
+  float horizGlow = (0.0006 + u_level * 0.0006) / (abs(p.y - horizWave) + 0.0012);
+  horizGlow *= 0.8 + 0.2 * hash21(u_time * 60.0 + 1.2);
+  
+  col += vec3(0.0, 0.6, 1.0) * horizGlow;
+  col += vec3(0.9, 0.95, 1.0) * pow(horizGlow, 3.0) * 0.3;
+  
+  col *= 0.92 + 0.08 * sin(p.y * 350.0 + u_time * u_speed * 15.0);
+  
+  vec2 edge_dist = abs(uv - 0.5);
+  col *= smoothstep(0.5, 0.45, edge_dist.x) * smoothstep(0.5, 0.45, edge_dist.y) * u_contrast;
+  outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+}
+`
+  },
+  {
+    name: "Sacred Geometry",
+    subtitle: "Symmetric Morphing Polygon Mandala",
+    code: `// Sacred Geometry — morphing rotating complex polygon mandalas
+uniform float u_speed;
+uniform float u_zoom;
+uniform float u_contrast;
+
+#define PI 3.14159265359
+
+float idx_mod(float x, float y) {
+  return x - y * floor(x/y);
+}
+
+float sdPolygon(vec2 p, int N, float r) {
+  float a = atan(p.y, p.x) + PI/2.0;
+  float b = 2.0 * PI / float(N);
+  float f = idx_mod(a, b) - b/2.0;
+  return length(p) * cos(f) - r;
+}
+
+mat2 rot2d(float a) {
+  float c = cos(a), s = sin(a);
+  return mat2(c, -s, s, c);
+}
+
+void main() {
+  vec2 p = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+  p *= (1.5 / u_zoom);
+  
+  float dist = length(p);
+  float angle = atan(p.y, p.x);
+  
+  vec3 col = vec3(0.015, 0.005, 0.03) * (1.0 / (dist + 0.4));
+  
+  float cycle = u_time * u_speed * 0.4;
+  float blend = fract(cycle);
+  int N1 = 3 + int(idx_mod(floor(cycle), 4.0)) * 2;
+  int N2 = 3 + int(idx_mod(floor(cycle) + 1.0, 4.0)) * 2;
+  if (N1 > 12) N1 = 12;
+  if (N2 > 12) N2 = 12;
+  
+  vec2 rotP = p * rot2d(u_time * u_speed * 0.18 + u_bass * 0.15);
+  float radius = 0.22 + u_bass * 0.08;
+  float mainSdf = mix(sdPolygon(rotP, N1, radius), sdPolygon(rotP, N2, radius), smoothstep(0.1, 0.9, blend));
+  
+  float glow = 0.0016 / (abs(mainSdf) + 0.0012);
+  vec3 mainColor = mix(vec3(1.0, 0.0, 0.5), vec3(0.0, 0.8, 1.0), sin(u_time * u_speed * 0.5) * 0.5 + 0.5);
+  col += mainColor * glow * (1.0 + u_mid * 1.5);
+  
+  float sectors = 6.0;
+  float sAngle = mod(angle, 2.0 * PI / sectors) - PI / sectors;
+  sAngle = abs(sAngle);
+  vec2 kP = dist * vec2(cos(sAngle), sin(sAngle));
+  
+  for (float i = 1.0; i <= 3.0; i++) {
+    vec2 subP = kP - vec2(0.25 * i, 0.0);
+    subP *= rot2d(u_time * u_speed * (0.3 * i) + u_mid * 0.4);
+    float subSdf = length(subP) - 0.04 * i * (1.0 + u_mid * 0.5);
+    
+    col += mix(vec3(1.0, 0.5, 0.0), vec3(0.0, 0.9, 0.7), i / 3.0) * (0.0008 / (abs(subSdf) + 0.001)) * (0.5 + u_level);
+    col += vec3(0.8, 0.8, 1.0) * (0.0003 / (abs(subP.y) + 0.002)) * (u_treble * 0.5 + 0.1) * smoothstep(0.6, 0.0, length(subP));
+  }
+  
+  float rayCount = 12.0;
+  float rays = sin(angle * rayCount - u_time * u_speed * 0.8) * cos(angle * 3.0) * 0.5 + 0.5;
+  col += vec3(1.0, 0.7, 0.3) * rays * smoothstep(0.8, 0.0, dist) * 0.15 * (u_bass + u_mid);
+  
+  col *= smoothstep(1.3, 0.4, dist) * u_contrast;
+  outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+}
+`
   }
 ];
