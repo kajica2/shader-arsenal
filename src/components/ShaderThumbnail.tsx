@@ -149,7 +149,7 @@ export function ShaderThumbnail({ shaderPath }: ShaderThumbnailProps) {
     }
 
     const fs = gl.createShader(gl.FRAGMENT_SHADER)!;
-    gl.shaderSource(fs, `${header}\\n${body}`);
+    gl.shaderSource(fs, `${header}\n${body}`);
     gl.compileShader(fs);
     if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
       const infoLog = gl.getShaderInfoLog(fs) || "fragment compile failed";
