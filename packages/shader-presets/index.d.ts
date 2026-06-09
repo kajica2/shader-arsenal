@@ -1,3 +1,6 @@
+export const audioCosmicSupernova: string;
+export const audioCyberHorizon: string;
+export const audioHypercubeFolding: string;
 export const audioKaleidoscope: string;
 export const audioNeonCyberpunk: string;
 export const audioPulseMandelbrot: string;

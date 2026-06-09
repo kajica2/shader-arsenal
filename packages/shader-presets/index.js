@@ -1,6 +1,360 @@
 var fs = require('fs');
 var path = require('path');
 
+exports.audioCosmicSupernova = `// Audio Cosmic Supernova
+// Generative cosmic starburst and swirling gaseous nebula powered by multi-band audio streams
+
+precision highp float;
+uniform float u_time;
+uniform vec2  u_resolution;
+uniform vec2  u_mouse;
+uniform float u_bass;
+uniform float u_mid;
+uniform float u_treble;
+uniform float u_level;
+
+// 2D Rotation
+mat2 rot(float a) {
+    float c = cos(a), s = sin(a);
+    return mat2(c, -s, s, c);
+}
+
+// Cheap fractional Brownian motion (fBM) noise
+float hash21(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash21(i + vec2(0.0, 0.0)), hash21(i + vec2(1.0, 0.0)), u.x),
+               mix(hash21(i + vec2(0.0, 1.0)), hash21(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    mat2 m = rot(0.5);
+    for (int i = 0; i < 5; i++) {
+        v += a * noise(p);
+        p = m * p * 2.0 + vec2(100.0);
+        a *= 0.5;
+    }
+    return v;
+}
+
+// Cosine based color palette generators
+vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
+    return a + b * cos(6.28318 * (c * t + d));
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+    float dist = length(uv);
+    
+    // Polar coordinates for warping spirals
+    float angle = atan(uv.y, uv.x);
+    
+    // Twisting effect driven by mid frequencies
+    float twist = angle + 3.0 * dist * (1.0 + u_mid);
+    vec2 twistedUv = vec2(cos(twist), sin(twist)) * dist;
+    
+    // Gaseous motion based on time and level
+    float speed = u_time * 0.4 + u_level * 0.5;
+    vec2 motionVec = twistedUv * 4.0 - vec2(speed);
+    
+    // Multi-layered noise
+    float f1 = fbm(motionVec);
+    float f2 = fbm(motionVec + f1 + vec2(u_time * 0.1));
+    
+    // Nebula Cloud Shaping
+    float cloudDensity = smoothstep(0.2, 0.8, f2);
+    
+    // Define dynamic color scheme sweeping through space
+    // Base palette cycles slightly with time and mid levels
+    vec3 colorA = vec3(0.5, 0.5, 0.5);
+    vec3 colorB = vec3(0.5, 0.5, 0.5);
+    vec3 colorC = vec3(1.0, 1.0, 1.0);
+    vec3 colorD = vec3(0.0, 0.33, 0.67) + vec3(u_mid * 0.3, 0.0, -u_mid * 0.2);
+    
+    float colCycle = dist * 0.5 - speed * 0.1 + f2 * 0.3;
+    vec3 nebulaColor = palette(colCycle, colorA, colorB, colorC, colorD);
+    
+    vec3 finalColor = nebulaColor * cloudDensity;
+    
+    // Central Supernova Star core glowing aggressively with bass
+    float coreSize = 0.02 + u_bass * 0.05;
+    float coreGlow = coreSize / (dist + 0.015);
+    vec3 coreColor = vec3(1.0, 0.9, 0.7) * coreGlow;
+    
+    finalColor += coreColor;
+    
+    // Radiant solar flare rays
+    float rays = sin(angle * 8.0 - u_time * 2.0) * sin(angle * 3.0 + u_time) * 0.5 + 0.5;
+    float rayStrength = smoothstep(0.5, 0.0, dist) * rays * 0.2 * (u_bass + 0.2);
+    finalColor += vec3(0.9, 0.45, 0.15) * rayStrength;
+    
+    // Ambient Starfield flashing to treble peaks
+    vec2 starGrid = uv * 35.0;
+    vec2 starIp = floor(starGrid);
+    vec2 starFp = fract(starGrid) - 0.5;
+    float starHash = hash21(starIp);
+    if (starHash > 0.985) {
+        float starIntensity = smoothstep(0.08, 0.0, length(starFp)) * starHash;
+        // Sparkle animation
+        starIntensity *= 0.5 + 0.5 * sin(u_time * 15.0 * starHash);
+        finalColor += vec3(1.0, 1.0, 1.0) * starIntensity * (u_treble * 2.0 + 0.2) * (1.0 - dist * 1.5);
+    }
+    
+    // Cosmic dust vignetting at screen edges
+    finalColor *= smoothstep(1.2, 0.5, dist);
+    
+    outColor = vec4(finalColor, 1.0);
+}
+`;
+
+exports.audioCyberHorizon = `// Audio Cyber Horizon
+// Retro-futuristic synthwave perspective grid and pulsing neon sun reacting to sound bands
+
+precision highp float;
+uniform float u_time;
+uniform vec2  u_resolution;
+uniform vec2  u_mouse;
+uniform float u_bass;
+uniform float u_mid;
+uniform float u_treble;
+uniform float u_level;
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    vec2 p = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+    
+    // Create sky-to-ground partition
+    float horizon = -0.1 + sin(p.x * 2.0 + u_time) * 0.01 * u_mid;
+    
+    vec3 col = vec3(0.01, 0.005, 0.02); // Sky background
+    
+    // --- 1. THE GROUND GRID ---
+    if (p.y < horizon) {
+        // Perspective mapping
+        float d = horizon - p.y;
+        float depth = 1.0 / d;
+        
+        // Perspective coordinates
+        float x_grid = p.x * depth * 0.5;
+        float y_grid = depth * 0.4 + u_time * (0.8 + u_mid * 1.5);
+        
+        // Grid pattern with smooth anti-aliased lines
+        float line_width = 0.05 + 0.1 * smoothstep(1.5, 0.0, depth * 0.05);
+        
+        float cell_x = abs(fract(x_grid) - 0.5) / fwidth(x_grid);
+        float cell_y = abs(fract(y_grid) - 0.5) / fwidth(y_grid);
+        
+        float grid_lines = min(cell_x, cell_y);
+        float grid_mask = 1.0 - smoothstep(0.0, 1.2, grid_lines * line_width);
+        
+        // Grid line glowing color (cyan pulsing to pink on beats)
+        vec3 grid_color = mix(vec3(0.0, 0.9, 1.0), vec3(1.0, 0.0, 0.8), u_bass);
+        
+        // Add electronic surge wave traveling down the grid lines
+        float surge = sin(y_grid * 0.5 - u_time * 8.0) * 0.5 + 0.5;
+        grid_color += vec3(1.0) * pow(surge, 8.0) * (u_treble * 1.5 + 0.2);
+        
+        col = grid_color * grid_mask * smoothstep(0.0, 1.0, d * 4.0);
+        
+        // Add deep background fog at the horizon
+        float fog = exp(-d * 6.0);
+        col = mix(col, vec3(0.1, 0.01, 0.12), fog);
+    } 
+    // --- 2. THE SKY ---
+    else {
+        // Sunset gradient
+        float skyGrad = (p.y - horizon) * 1.5;
+        col = mix(vec3(0.4, 0.0, 0.35), vec3(0.05, 0.0, 0.12), clamp(skyGrad, 0.0, 1.0));
+        
+        // Synthwave horizon mountain silhouettes
+        float mountHeight = 0.0;
+        for (float i = 1.0; i < 4.0; i++) {
+            float speed = i * 0.08;
+            float scale = i * 8.0;
+            float m = sin(p.x * scale + u_time * speed) * 0.04 / i;
+            m += cos(p.x * (scale * 1.5) - i) * 0.02 / i;
+            if (p.y - horizon < m + 0.04) {
+                col = mix(col, vec3(0.02, 0.0, 0.05) * i, 0.9);
+            }
+        }
+        
+        // Pulse neon Sun
+        vec2 sun_pos = vec2(0.0, horizon + 0.05);
+        float sun_dist = length(p - sun_pos);
+        float sun_radius = 0.32 + u_bass * 0.08;
+        
+        if (sun_dist < sun_radius) {
+            // Sun grid slice cutouts
+            float slice = fract((p.y - horizon) * 22.0);
+            float opacity = smoothstep(0.15, 0.25, p.y - horizon);
+            
+            if (slice > 0.25 || p.y - horizon < 0.08) {
+                // Color gradient for the sun (yellow at bottom, pink at top)
+                float sunGrad = (p.y - sun_pos.y) / sun_radius;
+                vec3 sun_color = mix(vec3(1.0, 0.8, 0.0), vec3(1.0, 0.0, 0.5), sunGrad);
+                
+                // Neon core glow beat reactive
+                sun_color += vec3(1.0, 0.5, 0.0) * u_bass * 0.3;
+                col = sun_color;
+            }
+        }
+        
+        // Sun glow bleeding into sky
+        float sun_glow = sun_radius / (sun_dist + 0.12);
+        col += vec3(1.0, 0.0, 0.6) * pow(sun_glow, 2.5) * 0.35 * (u_bass + 0.5);
+        
+        // Subtle sky stars twinkling
+        float star_hash = fract(sin(dot(floor(p * 45.0), vec2(45.1, 91.7))) * 53456.23);
+        if (star_hash > 0.992) {
+            float tw = 0.5 + 0.5 * sin(u_time * 8.0 * star_hash);
+            col += vec3(0.9, 0.8, 1.0) * tw * u_treble * smoothstep(0.4, 0.9, p.y);
+        }
+    }
+    
+    // Contrast and chromatic boost
+    col = pow(col, vec3(0.92));
+    outColor = vec4(col, 1.0);
+}
+`;
+
+exports.audioHypercubeFolding = `// Audio Hypercube Folding
+// Raymarched geometric construct folding, morphing, and glowing with multi-band audio reactivity
+
+precision highp float;
+uniform float u_time;
+uniform vec2  u_resolution;
+uniform vec2  u_mouse;
+uniform float u_bass;
+uniform float u_mid;
+uniform float u_treble;
+uniform float u_level;
+
+// 2D Rotation matrix
+mat2 rot2d(float a) {
+    float c = cos(a), s = sin(a);
+    return mat2(c, -s, s, c);
+}
+
+// Signed Distance Function for a Box
+float sdBox(vec3 p, vec3 b) {
+    vec3 q = abs(p) - b;
+    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+// Map function returning the scene density
+float map(vec3 p, out float matId) {
+    // Dynamic coordinate replication based on mid frequencies
+    float scale = 3.5 + u_mid * 1.5;
+    vec3 p_fold = p;
+    
+    // Rotate entire space over time
+    p_fold.xz *= rot2d(u_time * 0.15 + u_bass * 0.1);
+    p_fold.yz *= rot2d(u_time * 0.08);
+    
+    // Symmetric folding
+    p_fold = abs(p_fold) - vec3(1.2 + u_bass * 0.4);
+    p_fold.xy *= rot2d(u_time * 0.2 + u_mid * 0.3);
+    
+    // Infinite grid repetition on fold
+    float size = 0.6 + u_treble * 0.2;
+    float box = sdBox(p_fold, vec3(size));
+    
+    // Core sphere
+    float sphere = length(p) - (0.4 + u_bass * 0.5);
+    
+    if (box < sphere) {
+        matId = 1.0; // Box structure
+        return box;
+    } else {
+        matId = 2.0; // Glowing Core
+        return sphere;
+    }
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+    
+    // Ray setup
+    vec3 ro = vec3(0.0, 0.0, -5.0); // Ray Origin
+    vec3 rd = normalize(vec3(uv, 1.2)); // Ray Direction
+    
+    // Raymarching Loop
+    float t = 0.0;
+    float maxDist = 15.0;
+    float matId = 0.0;
+    int steps = 60;
+    
+    float d = 0.0;
+    for (int i = 0; i < steps; i++) {
+        vec3 p = ro + rd * t;
+        d = map(p, matId);
+        if (d < 0.001 || t > maxDist) break;
+        t += d;
+    }
+    
+    vec3 col = vec3(0.0);
+    
+    if (t < maxDist) {
+        // We hit an object
+        vec3 p = ro + rd * t;
+        
+        // Calculate normal
+        vec2 eps = vec2(0.002, 0.0);
+        float dummy;
+        vec3 n = normalize(vec3(
+            map(p + eps.xyy, dummy) - map(p - eps.xyy, dummy),
+            map(p + eps.yxy, dummy) - map(p - eps.yxy, dummy),
+            map(p + eps.yyx, dummy) - map(p - eps.yyx, dummy)
+        ));
+        
+        // Lighting
+        vec3 lightPos = vec3(3.0, 5.0, -4.0);
+        vec3 l = normalize(lightPos - p);
+        float diff = max(0.0, dot(n, l));
+        
+        // Material Coloring
+        if (matId == 1.0) {
+            // Hypercube wireframe/structure
+            vec3 edgeColor = mix(vec3(0.05, 0.8, 0.9), vec3(0.8, 0.1, 0.9), sin(u_time + p.z * 0.5) * 0.5 + 0.5);
+            col = edgeColor * diff;
+            // Add grid line overlay using u_treble
+            float grid = sin(p.x * 20.0) * sin(p.y * 20.0) * sin(p.z * 20.0);
+            if (grid > 0.4 - u_treble * 0.3) {
+                col += vec3(0.9, 0.9, 1.0) * u_treble * 1.5;
+            }
+        } else {
+            // Glowing core
+            col = vec3(1.0, 0.3, 0.1) * (1.5 + u_bass * 2.0);
+        }
+        
+        // Fog/Depth fade
+        col = mix(col, vec3(0.01, 0.01, 0.03), 1.0 - exp(-0.08 * t * t));
+    } else {
+        // Background Glow
+        float bgGlow = 0.25 / (length(uv) + 0.5);
+        col = vec3(0.03, 0.0, 0.08) * bgGlow;
+        col += vec3(0.05, 0.4, 0.6) * pow(max(0.0, dot(rd, vec3(0.0, 0.0, 1.0))), 8.0) * u_bass;
+    }
+    
+    // Ambient Occlusion estimate for more depth
+    float ao = 1.0 / (1.0 + float(steps) * 0.01);
+    col *= ao;
+    
+    // Contrast & Color Correction
+    col = pow(col, vec3(0.95));
+    col = clamp(col, 0.0, 1.0);
+    
+    outColor = vec4(col, 1.0);
+}
+`;
+
 exports.audioKaleidoscope = `// Audio Kaleidoscope
 // Creates a kaleidoscopic pattern that reacts to audio
 

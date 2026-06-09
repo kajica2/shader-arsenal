@@ -54,6 +54,9 @@ import rawPlasmaShader from 'shader-arsenal-presets/presets/audio-reactive-plasm
 
 ## Available Presets
 
+- `audio-cosmic-supernova` (imported as `audioCosmicSupernova`)
+- `audio-cyber-horizon` (imported as `audioCyberHorizon`)
+- `audio-hypercube-folding` (imported as `audioHypercubeFolding`)
 - `audio-kaleidoscope` (imported as `audioKaleidoscope`)
 - `audio-neon-cyberpunk` (imported as `audioNeonCyberpunk`)
 - `audio-pulse-mandelbrot` (imported as `audioPulseMandelbrot`)
