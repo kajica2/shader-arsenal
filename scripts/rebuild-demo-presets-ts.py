@@ -1,14 +1,12 @@
-export interface DemoPreset {
-  name: string;
-  subtitle: string;
-  code: string;
-}
+import os
 
-export const DEMO_PRESETS: DemoPreset[] = [
-  {
-    name: "Sovereign Signal",
-    subtitle: "Band-Mapped FBM Plasma Warp",
-    code: `// Sovereign Signal — audio-reactive band-mapped FBM plasma
+# We define the 22 custom-mapped shader presets
+# Handcrafted with slider mappings (u_speed, u_zoom, u_contrast) for the motion-graphics VJ dashboard
+PRESETS = [
+    {
+        "name": "Sovereign Signal",
+        "subtitle": "Band-Mapped FBM Plasma Warp",
+        "code": """// Sovereign Signal — audio-reactive band-mapped FBM plasma
 uniform float u_speed;     // master time multiplier
 uniform float u_zoom;      // base scale
 uniform float u_contrast;  // output gain
@@ -74,12 +72,12 @@ void main() {
 
   col *= u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Neon Cybergrid",
-    subtitle: "Synthwave Horizon",
-    code: `// Neon Cybergrid — perspective synthwave grid reacting to audio frequencies
+}"""
+    },
+    {
+        "name": "Neon Cybergrid",
+        "subtitle": "Synthwave Horizon",
+        "code": """// Neon Cybergrid — perspective synthwave grid reacting to audio frequencies
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -116,12 +114,12 @@ void main() {
   
   finalColor *= u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Cosmic Nebula",
-    subtitle: "Swirling Plasma Clouds",
-    code: `// Cosmic Nebula — fluid swirl nebula reacting to audio levels
+}"""
+    },
+    {
+        "name": "Cosmic Nebula",
+        "subtitle": "Swirling Plasma Clouds",
+        "code": """// Cosmic Nebula — fluid swirl nebula reacting to audio levels
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -161,12 +159,12 @@ void main() {
   
   finalColor *= u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Quantum Fractal",
-    subtitle: "Mandelbrot Sound Orbit",
-    code: `// Quantum Fractal — Julia Set sound orbit
+}"""
+    },
+    {
+        "name": "Quantum Fractal",
+        "subtitle": "Mandelbrot Sound Orbit",
+        "code": """// Quantum Fractal — Julia Set sound orbit
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -204,12 +202,12 @@ void main() {
   
   col *= u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Helix Helix",
-    subtitle: "3D DNA Spiral Waves",
-    code: `// Helix Helix — 3D DNA-like rotating strands deforming to soundwaves
+}"""
+    },
+    {
+        "name": "Helix Helix",
+        "subtitle": "3D DNA Spiral Waves",
+        "code": """// Helix Helix — 3D DNA-like rotating strands deforming to soundwaves
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -242,12 +240,12 @@ void main() {
   
   finalColor *= u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Digital Glitch",
-    subtitle: "Static Noise Bars",
-    code: `// Digital Glitch — scanner lines with sound-driven horizontal pixel offsets
+}"""
+    },
+    {
+        "name": "Digital Glitch",
+        "subtitle": "Static Noise Bars",
+        "code": """// Digital Glitch — scanner lines with sound-driven horizontal pixel offsets
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -281,12 +279,12 @@ void main() {
   
   col *= u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Mandala Kaleidoscope",
-    subtitle: "Infinite Mirror Geometry",
-    code: `// Mandala Kaleidoscope — mirror reflection symmetry mapped onto audio levels
+}"""
+    },
+    {
+        "name": "Mandala Kaleidoscope",
+        "subtitle": "Infinite Mirror Geometry",
+        "code": """// Mandala Kaleidoscope — mirror reflection symmetry mapped onto audio levels
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -316,12 +314,12 @@ void main() {
   
   finalColor *= u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Quantum Ripples",
-    subtitle: "Soundwave Water Rings",
-    code: `// Quantum Ripples — concentric fluid wave rings reacting to audio
+}"""
+    },
+    {
+        "name": "Quantum Ripples",
+        "subtitle": "Soundwave Water Rings",
+        "code": """// Quantum Ripples — concentric fluid wave rings reacting to audio
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -346,12 +344,12 @@ void main() {
   
   finalColor *= u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Soundwave Starburst",
-    subtitle: "Explosive Audio Spike Rays",
-    code: `// Soundwave Starburst — explosive audio ray spikes extending radially
+}"""
+    },
+    {
+        "name": "Soundwave Starburst",
+        "subtitle": "Explosive Audio Spike Rays",
+        "code": """// Soundwave Starburst — explosive audio ray spikes extending radially
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -379,12 +377,12 @@ void main() {
   
   col *= u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Voronoi Grid Beats",
-    subtitle: "Structural Energy Cells",
-    code: `// Voronoi Grid Beats — cell grid boundaries deforming dynamically with music
+}"""
+    },
+    {
+        "name": "Voronoi Grid Beats",
+        "subtitle": "Structural Energy Cells",
+        "code": """// Voronoi Grid Beats — cell grid boundaries deforming dynamically with music
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -428,12 +426,12 @@ void main() {
   
   col *= u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Symmetric equalizer",
-    subtitle: "Rise & Fall Sound Bars",
-    code: `// Symmetric Equalizer — audio bars spectrum visualizer
+}"""
+    },
+    {
+        "name": "Symmetric equalizer",
+        "subtitle": "Rise & Fall Sound Bars",
+        "code": """// Symmetric Equalizer — audio bars spectrum visualizer
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -477,12 +475,12 @@ void main() {
   
   finalColor *= u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Cosmic Wormhole",
-    subtitle: "Hyperspace Star Tunnel",
-    code: `// Cosmic Wormhole — swirling hyperspace star tunnel responding to levels
+}"""
+    },
+    {
+        "name": "Cosmic Wormhole",
+        "subtitle": "Hyperspace Star Tunnel",
+        "code": """// Cosmic Wormhole — swirling hyperspace star tunnel responding to levels
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -512,12 +510,12 @@ void main() {
   
   finalColor *= u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Hypercube Fold",
-    subtitle: "Raymarched 3D Geometric Matrix",
-    code: `// Hypercube Fold — 3D Raymarched SDF box folding, morphing, and glowing with audio reactivity
+}"""
+    },
+    {
+        "name": "Hypercube Fold",
+        "subtitle": "Raymarched 3D Geometric Matrix",
+        "code": """// Hypercube Fold — 3D Raymarched SDF box folding, morphing, and glowing with audio reactivity
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -612,12 +610,12 @@ void main() {
   
   col = pow(col, vec3(0.95)) * u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Supernova Star",
-    subtitle: "Swirling Gaseous Cosmic Flares",
-    code: `// Supernova Star — generative cosmic starburst and swirling nebula deforming to audio
+}"""
+    },
+    {
+        "name": "Supernova Star",
+        "subtitle": "Swirling Gaseous Cosmic Flares",
+        "code": """// Supernova Star — generative cosmic starburst and swirling nebula deforming to audio
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -700,12 +698,12 @@ void main() {
   
   finalColor *= smoothstep(1.2, 0.5, dist) * u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Cyber Horizon",
-    subtitle: "Outrun Synthwave Neon Grid",
-    code: `// Cyber Horizon — outrun grid horizon with perspective mapping and neon pulsing sun
+}"""
+    },
+    {
+        "name": "Cyber Horizon",
+        "subtitle": "Outrun Synthwave Neon Grid",
+        "code": """// Cyber Horizon — outrun grid horizon with perspective mapping and neon pulsing sun
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -780,12 +778,12 @@ void main() {
   
   col = pow(col, vec3(0.92)) * u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Liquid Chroma",
-    subtitle: "Warped Iridescent Metallic Fluid",
-    code: `// Liquid Chroma — metallic fluid flow with chromatic aberration and iridescence
+}"""
+    },
+    {
+        "name": "Liquid Chroma",
+        "subtitle": "Warped Iridescent Metallic Fluid",
+        "code": """// Liquid Chroma — metallic fluid flow with chromatic aberration and iridescence
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -850,12 +848,12 @@ void main() {
   
   col *= smoothstep(1.3, 0.4, length(uv)) * u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Vector Scope",
-    subtitle: "Analog CRT Oscilloscope Laser",
-    code: `// Vector Scope — analog laser CRT oscilloscope with phosphor beam glow
+}"""
+    },
+    {
+        "name": "Vector Scope",
+        "subtitle": "Analog CRT Oscilloscope Laser",
+        "code": """// Vector Scope — analog laser CRT oscilloscope with phosphor beam glow
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -903,12 +901,12 @@ void main() {
   vec2 edge_dist = abs(uv - 0.5);
   col *= smoothstep(0.5, 0.45, edge_dist.x) * smoothstep(0.5, 0.45, edge_dist.y) * u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Sacred Geometry",
-    subtitle: "Symmetric Morphing Polygon Mandala",
-    code: `// Sacred Geometry — morphing rotating complex polygon mandalas
+}"""
+    },
+    {
+        "name": "Sacred Geometry",
+        "subtitle": "Symmetric Morphing Polygon Mandala",
+        "code": """// Sacred Geometry — morphing rotating complex polygon mandalas
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -975,12 +973,12 @@ void main() {
   
   col *= smoothstep(1.3, 0.4, dist) * u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Neon Cyberpunk",
-    subtitle: "Futuristic Laser Synths",
-    code: `// Neon Cyberpunk — futuristic lasers that deform dynamically
+}"""
+    },
+    {
+        "name": "Neon Cyberpunk",
+        "subtitle": "Futuristic Laser Synths",
+        "code": """// Neon Cyberpunk — futuristic lasers that deform dynamically
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -1001,12 +999,12 @@ void main() {
   
   col *= u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Quantum Tunnel",
-    subtitle: "Quantum Particle Gate",
-    code: `// Quantum Tunnel — quantum hyperspace accelerator
+}"""
+    },
+    {
+        "name": "Quantum Tunnel",
+        "subtitle": "Quantum Particle Gate",
+        "code": """// Quantum Tunnel — quantum hyperspace accelerator
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -1028,12 +1026,12 @@ void main() {
   
   finalColor *= u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Soundwave Star",
-    subtitle: "Erupting Pulsar Flares",
-    code: `// Soundwave Star — erupting stellar starburst
+}"""
+    },
+    {
+        "name": "Soundwave Star",
+        "subtitle": "Erupting Pulsar Flares",
+        "code": """// Soundwave Star — erupting stellar starburst
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -1055,12 +1053,12 @@ void main() {
   
   col *= u_contrast;
   outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Vortex Nebula",
-    subtitle: "Swirling Stellar Dust",
-    code: `// Vortex Nebula — swirling gaseous starfield
+}"""
+    },
+    {
+        "name": "Vortex Nebula",
+        "subtitle": "Swirling Stellar Dust",
+        "code": """// Vortex Nebula — swirling gaseous starfield
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -1087,12 +1085,12 @@ void main() {
   
   finalColor *= smoothstep(1.2, 0.4, r) * u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Cityscape Pulse",
-    subtitle: "Procedural Building Beats",
-    code: `// Cityscape Pulse — procedural building grids pulsing with the beat
+}"""
+    },
+    {
+        "name": "Cityscape Pulse",
+        "subtitle": "Procedural Building Beats",
+        "code": """// Cityscape Pulse — procedural building grids pulsing with the beat
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -1124,12 +1122,12 @@ void main() {
   
   color *= u_contrast;
   outColor = vec4(clamp(color, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Fire Dance",
-    subtitle: "Procedural Sound-Driven Flames",
-    code: `// Fire Dance — procedural fireplace dancing to sound waves
+}"""
+    },
+    {
+        "name": "Fire Dance",
+        "subtitle": "Procedural Sound-Driven Flames",
+        "code": """// Fire Dance — procedural fireplace dancing to sound waves
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -1180,12 +1178,12 @@ void main() {
   
   vec3 finalColor = mix(bg, color, fire) * u_contrast;
   outColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Ocean Waves",
-    subtitle: "Wavy Sea Surface Beats",
-    code: `// Ocean Waves — turbulent sound-reactive water surface waves
+}"""
+    },
+    {
+        "name": "Ocean Waves",
+        "subtitle": "Wavy Sea Surface Beats",
+        "code": """// Ocean Waves — turbulent sound-reactive water surface waves
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -1223,12 +1221,12 @@ void main() {
   
   color *= u_contrast;
   outColor = vec4(clamp(color, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Audio Plasma",
-    subtitle: "Pulsing Color Grid",
-    code: `// Audio Plasma — traditional sound-driven color field plasma
+}"""
+    },
+    {
+        "name": "Audio Plasma",
+        "subtitle": "Pulsing Color Grid",
+        "code": """// Audio Plasma — traditional sound-driven color field plasma
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -1253,12 +1251,12 @@ void main() {
   
   color *= u_contrast;
   outColor = vec4(clamp(color, 0.0, 1.0), 1.0);
-}`
-  },
-  {
-    name: "Waveform Tunnel",
-    subtitle: "Concentric Sound Spiral",
-    code: `// Waveform Tunnel — concentric audio rings tunnel spiral
+}"""
+    },
+    {
+        "name": "Waveform Tunnel",
+        "subtitle": "Concentric Sound Spiral",
+        "code": """// Waveform Tunnel — concentric audio rings tunnel spiral
 uniform float u_speed;
 uniform float u_zoom;
 uniform float u_contrast;
@@ -1286,6 +1284,45 @@ void main() {
   
   color *= u_contrast;
   outColor = vec4(clamp(color, 0.0, 1.0), 1.0);
-}`
-  }
-];
+}"""
+    }
+]
+
+def main():
+    base_dir = "/Users/kajicadjuric/shader-arsenal"
+    presets_ts_file = os.path.join(base_dir, "src", "app", "demo", "audio", "presets.ts")
+    
+    # Generate presets.ts content
+    content = """export interface DemoPreset {
+  name: string;
+  subtitle: string;
+  code: string;
+}
+
+export const DEMO_PRESETS: DemoPreset[] = [
+"""
+    
+    for i, p in enumerate(PRESETS):
+        name = p["name"]
+        sub = p["subtitle"]
+        code = p["code"]
+        
+        content += "  {\n"
+        content += f"    name: \"{name}\",\n"
+        content += f"    subtitle: \"{sub}\",\n"
+        content += "    code: `" + code + "`\n"
+        
+        if i < len(PRESETS) - 1:
+            content += "  },\n"
+        else:
+            content += "  }\n"
+            
+    content += "];\n"
+    
+    with open(presets_ts_file, "w", encoding="utf-8") as f:
+        f.write(content)
+        
+    print(f"Successfully generated presets.ts with {len(PRESETS)} demo presets!")
+
+if __name__ == "__main__":
+    main()
