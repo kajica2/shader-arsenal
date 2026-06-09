@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import { useEffect as useEffectImport } from "react"; // We'll use the same useEffect
+import { useParams } from "next/navigation";
 
 export default function PresetPage() {
-  const router = useRouter();
-  const { path } = router.query as { path: string };
+  const params = useParams();
+  const pathParts = params?.path;
+  const path = Array.isArray(pathParts) ? pathParts.join("/") : "";
+  
   const [source, setSource] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,14 +40,50 @@ export default function PresetPage() {
   return (
     <main className="page">
       <div className="header">
-        <Link href="/library">
-          <a>← Back to Library</a>
+        <Link href="/library" className="back-link">
+          ← Back to Library
         </Link>
         <h1>{path.split("/").pop()}</h1>
       </div>
       <div className="container">
         <pre className="code">{source}</pre>
       </div>
+      <style jsx>{`
+        .page {
+          max-width: 1000px;
+          margin: 0 auto;
+          padding: 4rem 2rem;
+        }
+        .header {
+          margin-bottom: 2rem;
+        }
+        .back-link {
+          font-size: 0.8rem;
+          color: var(--ink-dim);
+          text-decoration: none;
+        }
+        .back-link:hover {
+          color: var(--accent);
+        }
+        h1 {
+          font-size: 2rem;
+          margin-top: 1rem;
+          text-transform: uppercase;
+        }
+        .container {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          padding: 1.5rem;
+          overflow-x: auto;
+        }
+        .code {
+          font-family: ui-monospace, monospace;
+          font-size: 0.85rem;
+          color: var(--ink);
+          line-height: 1.6;
+        }
+      `}</style>
     </main>
   );
 }

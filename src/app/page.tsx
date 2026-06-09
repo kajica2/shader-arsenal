@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { getShaderStats } from "@/lib/shader-index";
+import { getShaderStats, getShaderOfTheDay } from "@/lib/shader-index";
+import { ShaderOfTheDay } from "@/components/ShaderOfTheDay";
 
 export default async function Home() {
   const stats = await getShaderStats();
+  const dailyShader = getShaderOfTheDay();
 
   return (
     <main className="home">
@@ -54,6 +56,8 @@ export default async function Home() {
           <div className="stat-label">source size</div>
         </div>
       </section>
+
+      <ShaderOfTheDay path={dailyShader.path} name={dailyShader.name} date={dailyShader.date} />
 
       <section className="categories">
         <h2>Categories</h2>

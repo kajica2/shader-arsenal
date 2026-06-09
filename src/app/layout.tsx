@@ -1,3 +1,4 @@
+console.log("RootLayout module evaluated");
 import type { Metadata } from "next";
 import "./globals.css";
 

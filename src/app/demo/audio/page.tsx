@@ -2,94 +2,12 @@
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
+import { DEMO_PRESETS } from "./presets";
 
 const ShaderRuntime = dynamic(
   () => import("@/components/ShaderRuntime").then((m) => m.ShaderRuntime),
   { ssr: false }
 );
-
-const FRAG = `// Sovereign Signal — audio-reactive band-mapped FBM plasma
-// Runtime auto-injects: u_time, u_resolution, u_mouse,
-//   u_bass, u_mid, u_treble, u_level, outColor. Don't redeclare.
-
-uniform float u_speed;     // master time multiplier
-uniform float u_zoom;      // base scale
-uniform float u_contrast;  // output gain
-
-// ---- minimal inline lygia-style helpers (no #include to keep this self-contained) ----
-float hash(vec2 p) {
-  p = fract(p * vec2(123.34, 456.21));
-  p += dot(p, p + 45.32);
-  return fract(p.x * p.y);
-}
-
-float noise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);
-  float a = hash(i);
-  float b = hash(i + vec2(1.0, 0.0));
-  float c = hash(i + vec2(0.0, 1.0));
-  float d = hash(i + vec2(1.0, 1.0));
-  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-
-float fbm(vec2 p) {
-  float v = 0.0;
-  float a = 0.5;
-  for (int i = 0; i < 6; i++) {
-    v += a * noise(p);
-    p *= 2.02;
-    a *= 0.5;
-  }
-  return v;
-}
-
-vec3 hsv2rgb(vec3 c) {
-  vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
-  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-}
-
-// Spectral palette (Zucconi-style)
-vec3 spectral(float t) {
-  return hsv2rgb(vec3(t, 0.85, 1.0));
-}
-
-void main() {
-  vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
-  float t = u_time * u_speed;
-
-  // Domain warping driven by noise + audio
-  vec2 q = vec2(fbm(uv * u_zoom + t * 0.15),
-                fbm(uv * u_zoom + vec2(3.7, 1.2) + t * 0.12));
-  vec2 r = vec2(fbm(uv * u_zoom + 2.0 * q + vec2(1.7, 9.2) + 0.15 * t),
-                fbm(uv * u_zoom + 2.0 * q + vec2(8.3, 2.8) + 0.126 * t));
-  float f = fbm(uv * u_zoom + 2.0 * r);
-
-  // Hue rotates with time + mid-band; saturation spikes with bass
-  float hue = fract(t * 0.05 + r.x * 0.6 + u_mid * 0.4);
-  float sat = clamp(0.7 + u_bass * 0.6 + u_treble * 0.2, 0.0, 1.0);
-  vec3 col = hsv2rgb(vec3(hue, sat, pow(f, 1.5)));
-
-  // Bass pump — add cyan/magenta energy
-  col += vec3(0.0, 0.8, 1.0) * u_bass * 0.4 * smoothstep(0.0, 0.5, f);
-  col += vec3(1.0, 0.3, 0.9) * u_treble * 0.3 * (1.0 - smoothstep(0.0, 0.5, f));
-
-  // Mouse pulls a soft hotspot
-  float md = length(uv - (u_mouse * 2.0 - 1.0) * vec2(u_resolution.x / u_resolution.y, 1.0));
-  col += vec3(1.0, 0.85, 0.5) * 0.25 * exp(-md * 6.0) * (0.5 + u_level * 1.5);
-
-  // Scanlines + grain for that VJ edge
-  float scan = 0.94 + 0.06 * sin(gl_FragCoord.y * 2.5 + t * 4.0);
-  col *= scan;
-  float grain = (hash(gl_FragCoord.xy + t) - 0.5) * 0.04;
-  col += grain;
-
-  col *= u_contrast;
-  outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
-}
-`;
 
 const UNIFORMS = [
   { name: "u_speed", type: "float" as const, value: 1.0, min: 0, max: 4, step: 0.05 },
@@ -100,22 +18,23 @@ const UNIFORMS = [
 export default function AudioDemoPage() {
   const [err, setErr] = useState<string | null>(null);
   const [uniforms, setUniforms] = useState(UNIFORMS);
-  const [busy, setBusy] = useState(false);
+  const [presetIndex, setPresetIndex] = useState(0);
 
   const set = (n: string, v: number) => {
     setUniforms((us) => us.map((u) => (u.name === n ? { ...u, value: v } : u)));
   };
 
+  const activePreset = DEMO_PRESETS[presetIndex];
+
   return (
     <main className="page">
       <div className="stage">
         <ShaderRuntime
-          fragment={FRAG}
+          fragment={activePreset.code}
           uniforms={uniforms}
           audioReactive
           onError={(e) => {
             setErr(e);
-            setBusy(false);
           }}
         />
       </div>
@@ -123,15 +42,37 @@ export default function AudioDemoPage() {
         <div className="panel-head">
           <a href="/" className="back">← home</a>
           <h1 className="title">AUDIO DEMO</h1>
-          <div className="subtitle">Sovereign Signal · FBM Plasma</div>
+          <div className="subtitle">{activePreset.name} · {activePreset.subtitle}</div>
         </div>
 
         <section>
-          <h2>Audio</h2>
+          <h2>SELECT PRESET</h2>
+          <div className="preset-grid">
+            {DEMO_PRESETS.map((p, idx) => (
+              <button
+                key={p.name}
+                className={`preset-btn ${presetIndex === idx ? "active" : ""}`}
+                onClick={() => {
+                  setPresetIndex(idx);
+                  setErr(null); // Clear error on switch
+                }}
+              >
+                <div className="p-num">{String(idx + 1).padStart(2, "0")}</div>
+                <div className="p-info">
+                  <div className="p-title">{p.name}</div>
+                  <div className="p-desc">{p.subtitle}</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h2>Audio Control</h2>
           <p className="hint">
-            Click <strong>ENABLE MIC</strong> on the canvas. The shader
+            Click <strong>ENABLE MIC</strong> on the canvas viewport. The shader
             listens for u_bass, u_mid, u_treble, u_level from the
-            AnalyserNode. Play music. Watch the warps respond.
+            mic AnalyserNode. Watch the warps respond!
           </p>
         </section>
 
@@ -158,10 +99,9 @@ export default function AudioDemoPage() {
         <section>
           <h2>Tips</h2>
           <ul className="tips">
-            <li>Move the mouse over the canvas — hotspot follows.</li>
-            <li>Drop the speed to 0.3 and crank bass music for slow warp.</li>
-            <li>Push u_zoom to 7+ to enter a tight mandala mode.</li>
-            <li>Code is in <code>src/app/demo/audio/page.tsx</code>.</li>
+            <li>Move the mouse over the canvas to shift hotspots.</li>
+            <li>Drop u_speed to 0.3 and crank bass music for slower warps.</li>
+            <li>Push u_zoom high to enter geometric mandala modes.</li>
           </ul>
         </section>
 
@@ -176,7 +116,7 @@ export default function AudioDemoPage() {
       <style jsx>{`
         .page {
           display: grid;
-          grid-template-columns: 1fr 360px;
+          grid-template-columns: 1fr 380px;
           height: 100vh;
           width: 100vw;
         }
@@ -190,41 +130,132 @@ export default function AudioDemoPage() {
           border-left: 1px solid var(--border);
           padding: 1.5rem;
           overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
         }
         .panel-head {
-          margin-bottom: 1.5rem;
+          border-bottom: 1px solid var(--border);
+          padding-bottom: 1rem;
         }
         .back {
           font-size: 0.75rem;
           letter-spacing: 0.2em;
           text-transform: uppercase;
+          color: var(--ink-dim);
+        }
+        .back:hover {
+          color: var(--accent);
         }
         .title {
-          font-size: 1.2rem;
+          font-size: 1.4rem;
           margin-top: 0.5rem;
           color: var(--accent);
+          font-weight: 500;
+          letter-spacing: 0.1em;
         }
         .subtitle {
           font-size: 0.75rem;
-          letter-spacing: 0.2em;
+          letter-spacing: 0.15em;
           color: var(--ink-dim);
           text-transform: uppercase;
           margin-top: 0.25rem;
         }
         section {
-          margin-bottom: 1.5rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        h2 {
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 0.15em;
+          color: var(--ink-dim);
+          border-bottom: 1px solid var(--border);
+          padding-bottom: 0.3rem;
+          margin: 0;
+        }
+        .preset-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 0.4rem;
+          max-height: 250px;
+          overflow-y: auto;
+          padding-right: 0.25rem;
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          background: rgba(6, 6, 8, 0.4);
+          padding: 0.5rem;
+        }
+        /* Custom scrollbar for preset selector */
+        .preset-grid::-webkit-scrollbar {
+          width: 4px;
+        }
+        .preset-grid::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .preset-grid::-webkit-scrollbar-thumb {
+          background: var(--border-hi);
+          border-radius: 2px;
+        }
+        .preset-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          background: transparent;
+          border: 1px solid transparent;
+          padding: 0.5rem 0.75rem;
+          width: 100%;
+          text-align: left;
+          cursor: pointer;
+          border-radius: 3px;
+          transition: all 0.2s ease;
+        }
+        .preset-btn:hover {
+          background: rgba(201, 168, 76, 0.05);
+          border-color: var(--border);
+        }
+        .preset-btn.active {
+          background: rgba(201, 168, 76, 0.12);
+          border-color: var(--accent);
+        }
+        .preset-btn.active .p-num {
+          color: var(--accent);
+        }
+        .preset-btn.active .p-title {
+          color: var(--accent-l);
+        }
+        .p-num {
+          font-family: monospace;
+          font-size: 0.85rem;
+          color: var(--ink-dim);
+        }
+        .p-info {
+          display: flex;
+          flex-direction: column;
+          text-transform: none;
+        }
+        .p-title {
+          font-size: 0.85rem;
+          color: var(--ink);
+          font-weight: 500;
+          letter-spacing: 0.02em;
+        }
+        .p-desc {
+          font-size: 0.7rem;
+          color: var(--ink-dim);
         }
         .hint {
           color: var(--ink-dim);
           line-height: 1.6;
-          font-size: 0.85rem;
+          font-size: 0.8rem;
+          margin: 0;
         }
         .hint strong {
           color: var(--accent);
         }
         .slider {
           display: block;
-          margin-bottom: 0.75rem;
         }
         .slider-head {
           display: flex;
@@ -247,28 +278,26 @@ export default function AudioDemoPage() {
           font-size: 0.8rem;
           color: var(--ink-dim);
           line-height: 1.8;
+          padding: 0;
+          margin: 0;
         }
         .tips li::before {
           content: "▸ ";
           color: var(--accent);
         }
-        code {
-          font-size: 0.75rem;
-          color: var(--cyan);
-        }
         .err {
           background: rgba(255, 93, 200, 0.1);
           border: 1px solid var(--magenta);
           padding: 0.75rem;
-          margin-top: 1rem;
           font-size: 0.75rem;
+          margin: 0;
         }
         .err pre {
           white-space: pre-wrap;
           color: var(--magenta);
           margin-top: 0.5rem;
         }
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
           .page {
             grid-template-columns: 1fr;
             grid-template-rows: 50vh 1fr;
@@ -276,6 +305,9 @@ export default function AudioDemoPage() {
           .panel {
             border-left: none;
             border-top: 1px solid var(--border);
+          }
+          .preset-grid {
+            max-height: 180px;
           }
         }
       `}</style>

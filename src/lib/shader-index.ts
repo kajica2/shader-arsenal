@@ -3,6 +3,7 @@ import * as path from "path";
 
 const SHADER_ROOT = path.join(process.cwd(), "src", "shaders", "lygia", "lygia");
 const HG_SDF = path.join(process.cwd(), "src", "shaders", "lygia", "hg_sdf.glsl");
+const PRESETS_ROOT = path.join(process.cwd(), "src", "presets");
 
 const PICKS: { path: string; description: string }[] = [
   {
@@ -121,13 +122,75 @@ export async function listShaders(prefix: string = "") {
     }
   }
   await walk(SHADER_ROOT);
+
+  try {
+    const presetEntries = await fs.readdir(PRESETS_ROOT, { withFileTypes: true });
+    for (const e of presetEntries) {
+      if (e.isFile() && e.name.endsWith(".glsl")) {
+        const full = path.join(PRESETS_ROOT, e.name);
+        const s = await fs.stat(full);
+        const relPath = `presets/${e.name}`;
+        if (!prefix || relPath.startsWith(prefix)) {
+          out.push({ path: relPath, size: s.size });
+        }
+      }
+    }
+  } catch (err) {
+    // Ignore if presets directory doesn't exist
+  }
+
   out.sort((a, b) => a.path.localeCompare(b.path));
   return out;
+}
+
+// ── Shader of the Day ─────────────────────────────────────────────
+// Deterministic pick seeded by date — same shader all day, changes daily.
+
+const PRESET_NAMES = [
+  "audio-reactive-plasma", "audio-waveform-tunnel", "audio-reactive-voronoi",
+  "audio-kaleidoscope", "audio-reactive-noise-field", "audio-pulse-mandelbrot",
+  "audio-reactive-glitch", "audio-waveform-water", "audio-reactive-cityscape",
+  "audio-reactive-DNA", "audio-reactive-fire", "audio-reactive-ocean",
+  "audio-neon-cyberpunk", "audio-quantum-tunnel", "audio-soundwave-star",
+  "audio-vortex-nebula",
+];
+
+/** Simple string hash to seed a deterministic index from a date string. */
+function hashDate(dateStr: string): number {
+  let h = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    h = ((h << 5) - h) + dateStr.charCodeAt(i);
+    h |= 0; // convert to 32-bit int
+  }
+  return Math.abs(h);
+}
+
+export function getShaderOfTheDay(): { path: string; name: string; date: string } {
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const idx = hashDate(dateStr) % PRESET_NAMES.length;
+  return {
+    path: `presets/${PRESET_NAMES[idx]}.glsl`,
+    name: PRESET_NAMES[idx].replace(/-/g, " "),
+    date: dateStr,
+  };
 }
 
 export async function readShader(relPath: string): Promise<string | null> {
   // disallow path traversal
   if (relPath.includes("..") || relPath.startsWith("/")) return null;
+
+  if (relPath.startsWith("presets/")) {
+    const filename = relPath.substring("presets/".length);
+    const full = path.join(PRESETS_ROOT, filename);
+    if (!full.startsWith(PRESETS_ROOT)) return null;
+    try {
+      return await fs.readFile(full, "utf8");
+    } catch {
+      return null;
+    }
+  }
+
   const full = path.join(SHADER_ROOT, relPath);
   if (!full.startsWith(SHADER_ROOT)) return null;
   try {

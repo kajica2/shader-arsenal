@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import * as path from "path";
-import { promises as fs } from "fs";
+import * as path from "path"; // turbopack-ignore
+import { promises as fs } from "fs"; // turbopack-ignore
 
 export const runtime = "nodejs";
 
@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
     // 1. Try relative to the including file
     if (fromFile) {
       const candidate = path.resolve(path.dirname(fromFile), includePath);
-      const realBase = await fs.realpath(base).catch(() => base);
-      const realRoot = await fs.realpath(LYGIA_ROOT).catch(() => LYGIA_ROOT);
+      const realBase = await fs.realpath(base).catch(() => base); // turbopack-ignore
+      const realRoot = await fs.realpath(LYGIA_ROOT).catch(() => LYGIA_ROOT); // turbopack-ignore
       if (
         (await exists(candidate)) &&
         (candidate.startsWith(realBase) || candidate.startsWith(realRoot))

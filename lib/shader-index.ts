@@ -33,9 +33,14 @@ export async function getShaderFiles(dir: string, prefix: string): Promise<Shade
         })
     );
     return shaderFiles;
-  } catch (error: Error) {
+  } catch (error: any) {
     // If directory doesn't exist, return empty array
-    if (error.code === 'ENOENT') {
+    if (
+      error != null &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'ENOENT'
+    ) {
       return [];
     }
     // Re-throw if it's not a "directory not found" error

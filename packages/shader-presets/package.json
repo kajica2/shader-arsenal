@@ -1,0 +1,29 @@
+{
+  "name": "shader-arsenal-presets",
+  "version": "1.0.0",
+  "description": "Premium audio-reactive GLSL preset library bundled for modern JS/TS and raw GLSL pipelines.",
+  "main": "index.js",
+  "module": "index.mjs",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.mjs",
+    "index.d.ts",
+    "presets"
+  ],
+  "keywords": [
+    "glsl",
+    "shaders",
+    "audio-reactive",
+    "webgl",
+    "presets",
+    "threejs",
+    "lygia"
+  ],
+  "author": "Kai Djuric",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kajica2/shader-arsenal.git"
+  }
+}
